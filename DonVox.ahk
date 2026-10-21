@@ -3,7 +3,7 @@
 Persistent
 
 ; ==============================================================================
-; DonVox v1.6 - Lector Ligero de Portapapeles y Texto Seleccionado
+; DonVox v1.5 - Lector Ligero de Portapapeles y Texto Seleccionado
 ; - Compatible con Voces Nativas de Windows (SAPI5 + OneCore) y Microsoft Azure
 ; - Conexión Nativa a Azure Neural por WinHTTP WebSocket (Protocolo Sec-MS-GEC v2)
 ; - Adaptación automática al Tema de Windows 11 (Modo Oscuro / Claro en GroupBox)
@@ -13,8 +13,10 @@ Persistent
 ; ==============================================================================
 
 global AppName := "DonVox"
-global AppVersion := "v1.6"`nglobal VersionNum := "1.6"`nglobal DonateUrl := "https://github.com/sponsors/Collazos022"`nglobal RepoUrl := "https://github.com/Collazos022/DonVox"
-global VersionNum := "1.5"
+global AppVersion := "v1.6"
+global VersionNum := "1.6"
+global DonateUrl := "https://github.com/sponsors/Collazos022"
+global RepoUrl := "https://github.com/Collazos022/DonVox"
 global ConfigFile := A_ScriptDir "\DonVox.ini"
 global TempMp3 := A_Temp "\donvox_azure_audio.mp3"
 
@@ -108,7 +110,9 @@ InitSystemLanguage() {
         Lang.LblHkStop      := "Stop reading immediately:"
         Lang.LblHkRepeat    := "Repeat last reading:"
         Lang.LblHkToggle    := "Enable / Disable at will:"
-        Lang.LblVersion     := "Version: " VersionNum`n        Lang.BtnDonate      := "♡ Donate"`n        Lang.BtnTest        := "Test Voice"
+        Lang.LblVersion     := "Version: " VersionNum
+        Lang.BtnDonate      := "♡ Donate"
+        Lang.BtnTest        := "Test Voice"
         Lang.BtnStop        := "Stop"
         Lang.BtnSave        := "Save && Close"
         Lang.MenuSettings   := "Settings && Shortcuts..."
@@ -149,7 +153,9 @@ InitSystemLanguage() {
         Lang.LblHkStop      := "Parar leitura imediatamente:"
         Lang.LblHkRepeat    := "Repetir última leitura:"
         Lang.LblHkToggle    := "Ativar / Desactivar a critério:"
-        Lang.LblVersion     := "Versão: " VersionNum`n        Lang.BtnDonate      := "♡ Doar"`n        Lang.BtnTest        := "Testar Voz"
+        Lang.LblVersion     := "Versão: " VersionNum
+        Lang.BtnDonate      := "♡ Doar"
+        Lang.BtnTest        := "Testar Voz"
         Lang.BtnStop        := "Parar"
         Lang.BtnSave        := "Salvar e Fechar"
         Lang.MenuSettings   := "Configurações e Atalhos..."
@@ -190,7 +196,9 @@ InitSystemLanguage() {
         Lang.LblHkStop      := "Arrêter la lecture immédiatement :"
         Lang.LblHkRepeat    := "Répéter la dernière lecture :"
         Lang.LblHkToggle    := "Activer / Désactiver à volonté :"
-        Lang.LblVersion     := "Version : " VersionNum`n        Lang.BtnDonate      := "♡ Soutenir"`n        Lang.BtnTest        := "Tester la Voix"
+        Lang.LblVersion     := "Version : " VersionNum
+        Lang.BtnDonate      := "♡ Soutenir"
+        Lang.BtnTest        := "Tester la Voix"
         Lang.BtnStop        := "Arrêter"
         Lang.BtnSave        := "Enregistrer et Fermer"
         Lang.MenuSettings   := "Paramètres et Raccourcis..."
@@ -232,7 +240,9 @@ InitSystemLanguage() {
         Lang.LblHkStop      := "Detener lectura inmediatamente:"
         Lang.LblHkRepeat    := "Repetir última lectura:"
         Lang.LblHkToggle    := "Activar / Desactivar a discreción:"
-        Lang.LblVersion     := "Versión: " VersionNum`n        Lang.BtnDonate      := "♡ Donar"`n        Lang.BtnTest        := "Probar Voz"
+        Lang.LblVersion     := "Versión: " VersionNum
+        Lang.BtnDonate      := "♡ Donar"
+        Lang.BtnTest        := "Probar Voz"
         Lang.BtnStop        := "Detener"
         Lang.BtnSave        := "Guardar y Cerrar"
         Lang.MenuSettings   := "Configuración y Atajos..."
