@@ -1,0 +1,12 @@
+# Archivos temporales generados por la aplicación
+donvox_azure_audio.mp3
+*.tmp
+*.log
+
+# Entornos y respaldos de editores
+.vscode/
+.idea/
+*.bak
+
+# Historial de versiones individuales (el repo mantiene DonVox.ahk canónico)
+DonVox_v*.ahk

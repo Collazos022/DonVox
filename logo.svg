@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 140" width="128" height="140">
+  <!-- Bocadillo de voz redondeado con cola inferior izquierda -->
+  <path id="bubble" fill="#0B587C" d="
+    M 28,4
+    H 100
+    A 24,24 0 0 1 124,28
+    V 96
+    A 24,24 0 0 1 100,120
+    H 34
+    C 26,129 15,135 5,137
+    C 9,128 11,119 10,111
+    A 24,24 0 0 1 4,96
+    V 28
+    A 24,24 0 0 1 28,4
+    Z" />
+
+  <!-- 7 barras de onda de sonido (blancas con bordes redondeados) -->
+  <g id="wave-bars" fill="#FFFFFF">
+    <!-- Barra 1 (Izquierda - corta) -->
+    <rect x="16" y="54" width="8" height="20" rx="2.5" />
+    <!-- Barra 2 (Media-alta) -->
+    <rect x="30" y="34" width="8" height="58" rx="2.5" />
+    <!-- Barra 3 (Principal - la más alta) -->
+    <rect x="45" y="16" width="8" height="96" rx="2.5" />
+    <!-- Barra 4 (Centro - corta) -->
+    <rect x="60" y="54" width="8" height="20" rx="2.5" />
+    <!-- Barra 5 (Media) -->
+    <rect x="75" y="39" width="8" height="49" rx="2.5" />
+    <!-- Barra 6 (Media-corta) -->
+    <rect x="90" y="52" width="8" height="25" rx="2.5" />
+    <!-- Barra 7 (Derecha - punto corto) -->
+    <rect x="105" y="59" width="8" height="10" rx="2.5" />
+  </g>
+</svg>
