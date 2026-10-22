@@ -13,8 +13,8 @@ Persistent
 ; ==============================================================================
 
 global AppName := "DonVox"
-global AppVersion := "v1.6.2"
-global VersionNum := "1.6.2"
+global AppVersion := "v1.6.3"
+global VersionNum := "1.6.3"
 global DonateUrl := "https://github.com/sponsors/Collazos022"
 global RepoUrl := "https://github.com/Collazos022/DonVox"
 global ConfigFile := A_ScriptDir "\DonVox.ini"
@@ -1265,8 +1265,8 @@ ShowSettingsGui(*) {
     }
 
     isDark   := IsWin11DarkMode()
-    lblColor := isDark ? "cFFFFFF" : "c000000" ; Blanco para títulos y textos principales
-    txtColor := isDark ? "cCCCCCC" : "c333333" ; Gris suave para etiquetas
+    lblColor := isDark ? "cFFFFFF" : "c000000" ; Blanco puro para títulos y texto principal
+    txtColor := isDark ? "cCCCCCC" : "c333333" ; Gris suave para subtítulos y etiquetas
     bgColor  := isDark ? "191919" : "F3F3F3"  ; Fondo grafito G-Helper
 
     SettingsGui := Gui("+OwnDialogs", AppName " " AppVersion " - " Lang.WinTitle)
@@ -1280,7 +1280,7 @@ ShowSettingsGui(*) {
     NumPut("Int", 2, cornerFlag, 0)
     DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", SettingsGui.Hwnd, "Int", 33, "Ptr", cornerFlag, "Int", 4)
 
-    ; Botones de acción estilo G-Helper (Gris plano sin bordes gruesos)
+    ; Botones de acción inferiores con fondo plano de G-Helper (#262626)
     CreateGhButton(pos, text, onClick := "") {
         btn := SettingsGui.Add("Text", pos " Center +0x200 Background262626 cFFFFFF", text)
         btn.SetFont("s9 bold", "Segoe UI Variable Text")
@@ -1289,102 +1289,83 @@ ShowSettingsGui(*) {
         return btn
     }
 
-    ; =================== 1. SECCIÓN: COMPORTAMIENTO GENERAL (SIN RECUADROS) ===================
+    ; Cuadros de entrada de atajo con la misma apariencia oscura de las listas (sin flecha de combo)
+    CreateDarkHotkey(pos, configField, labelName) {
+        btn := SettingsGui.Add("Text", pos " Center +0x200 Background262626 cFFFFFF +0x800000", Cfg.%configField%)
+        btn.SetFont("s9 bold", "Segoe UI Variable Text")
+        btn.OnEvent("Click", (*) => (
+            ib := InputBox("Presiona o escribe la combinación de teclas para:`n" labelName "`n(Ejemplos: +!c para Shift+Alt+C, ^!1 para Ctrl+Alt+1)", "Asignar Atajo", "w340 h140", Cfg.%configField%),
+            (ib.Result == "OK" && Trim(ib.Value) != "") ? (Cfg.%configField% := Trim(ib.Value), btn.Text := Cfg.%configField%) : 0
+        ))
+        return btn
+    }
+
+    ; =================== 1. SECCIÓN: COMPORTAMIENTO GENERAL (Alineado a x20) ===================
     SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "xm ym+10", Lang.SecGeneral)
+    SettingsGui.Add("Text", "x20 y16", Lang.SecGeneral)
 
     SettingsGui.SetFont("s9 norm " lblColor, "Segoe UI Variable Text")
-    chkMaster  := SettingsGui.Add("CheckBox", "xm y+10 " lblColor " Checked" Cfg.MasterEnabled, Lang.ChkMaster)
-    chkClip    := SettingsGui.Add("CheckBox", "xm y+8 " lblColor " Checked" Cfg.AutoClipboard, Lang.ChkClipboard)
-    chkStartup := SettingsGui.Add("CheckBox", "xm y+8 " lblColor " Checked" Cfg.StartWithWin, Lang.ChkStartup)
+    chkMaster  := SettingsGui.Add("CheckBox", "x20 y+12 " lblColor " Checked" Cfg.MasterEnabled, Lang.ChkMaster)
+    chkClip    := SettingsGui.Add("CheckBox", "x20 y+8 " lblColor " Checked" Cfg.AutoClipboard, Lang.ChkClipboard)
+    chkStartup := SettingsGui.Add("CheckBox", "x20 y+8 " lblColor " Checked" Cfg.StartWithWin, Lang.ChkStartup)
 
-    ; =================== 2. SECCIÓN: MOTOR DE VOZ ===================
+    ; =================== 2. SECCIÓN: MOTOR DE VOZ (Alineado a x20) ===================
     SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "xm y+20", Lang.SecVoice)
+    SettingsGui.Add("Text", "x20 y+20", Lang.SecVoice)
 
     SettingsGui.SetFont("s9 norm " lblColor, "Segoe UI Variable Text")
-    chkAzure := SettingsGui.Add("CheckBox", "xm y+10 " lblColor " Checked" Cfg.UseAzure, Lang.ChkAzure)
+    chkAzure := SettingsGui.Add("CheckBox", "x20 y+12 " lblColor " Checked" Cfg.UseAzure, Lang.ChkAzure)
 
-    SettingsGui.Add("Text", "xm y+12 " txtColor, Lang.LblLocalVoice)
-    ddlLocal := SettingsGui.Add("DropDownList", "xm y+4 w420 Choose" Cfg.LocalVoiceIndex, VoiceNames)
+    SettingsGui.Add("Text", "x20 y+12 " txtColor, Lang.LblLocalVoice)
+    ddlLocal := SettingsGui.Add("DropDownList", "x20 y+4 w420 Choose" Cfg.LocalVoiceIndex, VoiceNames)
 
-    SettingsGui.Add("Text", "xm y+12 " txtColor, Lang.LblAzureVoice)
-    ddlAzure := SettingsGui.Add("DropDownList", "xm y+4 w420 Choose" Cfg.AzureVoiceIndex, AzureVoices)
+    SettingsGui.Add("Text", "x20 y+12 " txtColor, Lang.LblAzureVoice)
+    ddlAzure := SettingsGui.Add("DropDownList", "x20 y+4 w420 Choose" Cfg.AzureVoiceIndex, AzureVoices)
 
-    SettingsGui.Add("Text", "xm y+14 w65 " txtColor, Lang.LblRate)
+    SettingsGui.Add("Text", "x20 y+14 w65 " txtColor, Lang.LblRate)
     sldRate  := SettingsGui.Add("Slider", "x+5 yp-3 w125 Range-10-10 ToolTip", Cfg.Rate)
 
     SettingsGui.Add("Text", "x+15 yp+3 w55 " txtColor, Lang.LblVolume)
     sldVol   := SettingsGui.Add("Slider", "x+5 yp-3 w125 Range0-100 ToolTip", Cfg.Volume)
 
-    ; =================== 3. SECCIÓN: TECLAS DE ACCESO RÁPIDO (ESTILO SELECTOR OSCURO) ===================
+    ; =================== 3. SECCIÓN: ATAJOS DE TECLADO (Alineado a x20, Cuadros Oscuros) ===================
     SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "xm y+20", Lang.SecHotkeys)
+    SettingsGui.Add("Text", "x20 y+20", Lang.SecHotkeys)
 
     SettingsGui.SetFont("s9 norm " txtColor, "Segoe UI Variable Text")
 
-    ; Función para configurar selector de atajo con opciones rápidas
-    BuildHkOptions(currentVal) {
-        opts := [currentVal, "Personalizar tecla...", "Desactivar atajo"]
-        return opts
-    }
+    SettingsGui.Add("Text", "x20 y+12 w230", Lang.LblHkReadSel)
+    hk1 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkReadSel", Lang.LblHkReadSel)
 
-    HandleHkChange(ddlCtrl, cfgField, labelName) {
-        if (ddlCtrl.Value == 2) {
-            ib := InputBox("Escribe la nueva combinación de teclas para:`n" labelName "`n(Ejemplos: +!c para Shift+Alt+C, ^!1 para Ctrl+Alt+1)", "Asignar Atajo", "w340 h140", Cfg.%cfgField%)
-            if (ib.Result == "OK" && Trim(ib.Value) != "") {
-                Cfg.%cfgField% := Trim(ib.Value)
-            }
-            ddlCtrl.Delete()
-            ddlCtrl.Add(BuildHkOptions(Cfg.%cfgField%))
-            ddlCtrl.Choose(1)
-        } else if (ddlCtrl.Value == 3) {
-            Cfg.%cfgField% := ""
-            ddlCtrl.Delete()
-            ddlCtrl.Add(BuildHkOptions("Desactivado"))
-            ddlCtrl.Choose(1)
-        }
-    }
+    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkPause)
+    hk2 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkPause",   Lang.LblHkPause)
 
-    SettingsGui.Add("Text", "xm y+12 w220", Lang.LblHkReadSel)
-    ddlHk1 := SettingsGui.Add("DropDownList", "x+10 yp-4 w190 Choose1", BuildHkOptions(Cfg.HkReadSel))
+    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkStop)
+    hk3 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkStop",    Lang.LblHkStop)
 
-    SettingsGui.Add("Text", "xm y+10 w220", Lang.LblHkPause)
-    ddlHk2 := SettingsGui.Add("DropDownList", "x+10 yp-4 w190 Choose1", BuildHkOptions(Cfg.HkPause))
+    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkRepeat)
+    hk4 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkRepeat",  Lang.LblHkRepeat)
 
-    SettingsGui.Add("Text", "xm y+10 w220", Lang.LblHkStop)
-    ddlHk3 := SettingsGui.Add("DropDownList", "x+10 yp-4 w190 Choose1", BuildHkOptions(Cfg.HkStop))
+    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkToggle)
+    hk5 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkToggle",  Lang.LblHkToggle)
 
-    SettingsGui.Add("Text", "xm y+10 w220", Lang.LblHkRepeat)
-    ddlHk4 := SettingsGui.Add("DropDownList", "x+10 yp-4 w190 Choose1", BuildHkOptions(Cfg.HkRepeat))
-
-    SettingsGui.Add("Text", "xm y+10 w220", Lang.LblHkToggle)
-    ddlHk5 := SettingsGui.Add("DropDownList", "x+10 yp-4 w190 Choose1", BuildHkOptions(Cfg.HkToggle))
-
-    ddlHk1.OnEvent("Change", (*) => HandleHkChange(ddlHk1, "HkReadSel", Lang.LblHkReadSel))
-    ddlHk2.OnEvent("Change", (*) => HandleHkChange(ddlHk2, "HkPause",   Lang.LblHkPause))
-    ddlHk3.OnEvent("Change", (*) => HandleHkChange(ddlHk3, "HkStop",    Lang.LblHkStop))
-    ddlHk4.OnEvent("Change", (*) => HandleHkChange(ddlHk4, "HkRepeat",  Lang.LblHkRepeat))
-    ddlHk5.OnEvent("Change", (*) => HandleHkChange(ddlHk5, "HkToggle",  Lang.LblHkToggle))
-
-    ; =================== 4. BARRA DE ACCIÓN INFERIOR ===================
+    ; =================== 4. BARRA DE ACCIÓN INFERIOR (Compacta y Proporcionada) ===================
     verColor := isDark ? "c60CDFF" : "c0B6288"
-    lblVer := SettingsGui.Add("Text", "xm y+24 w130 " verColor, Lang.LblVersion)
+    lblVer := SettingsGui.Add("Text", "x20 y+18 w130 " verColor, Lang.LblVersion)
     lblVer.SetFont("underline")
     lblVer.OnEvent("Click", (*) => Run(RepoUrl))
 
-    btnDonate := CreateGhButton("xm y+8 w90 h32", Lang.BtnDonate, (*) => Run(DonateUrl))
-    btnTest   := CreateGhButton("x+8 yp w115 h32", Lang.BtnTest)
+    btnDonate := CreateGhButton("x20 y+8 w85 h32", Lang.BtnDonate, (*) => Run(DonateUrl))
+    btnTest   := CreateGhButton("x+8 yp w95 h32", Lang.BtnTest)   ; Ancho optimizado a 95
     btnStop   := CreateGhButton("x+8 yp w75 h32", Lang.BtnStop, (*) => StopReading())
-    btnSave   := CreateGhButton("x+14 yp w120 h32", Lang.BtnSave)
+    btnSave   := CreateGhButton("x+12 yp w145 h32", Lang.BtnSave)
 
-    ; Aplicar estilos visuales DarkMode_Explorer y DarkMode_CFD
+    ; Aplicar temas oscuros a casillas y listas de selección
     if isDark {
         for chk in [chkMaster, chkClip, chkStartup, chkAzure] {
             try DllCall("uxtheme\SetWindowTheme", "Ptr", chk.Hwnd, "WStr", "DarkMode_Explorer", "Ptr", 0)
         }
-        allDdls := [ddlLocal, ddlAzure, ddlHk1, ddlHk2, ddlHk3, ddlHk4, ddlHk5]
-        for ddl in allDdls {
+        for ddl in [ddlLocal, ddlAzure] {
             try DllCall("uxtheme\SetWindowTheme", "Ptr", ddl.Hwnd, "WStr", "DarkMode_CFD", "Ptr", 0)
         }
     }
@@ -1418,5 +1399,5 @@ ShowSettingsGui(*) {
     ))
 
     SettingsGui.OnEvent("Close", (*) => (SettingsGui.Destroy(), SettingsGui := ""))
-    SettingsGui.Show("w445 h640")
+    SettingsGui.Show("w460 h570")
 }
