@@ -13,8 +13,8 @@ Persistent
 ; ==============================================================================
 
 global AppName := "DonVox"
-global AppVersion := "v1.6.3"
-global VersionNum := "1.6.3"
+global AppVersion := "v1.6.4"
+global VersionNum := "1.6.4"
 global DonateUrl := "https://github.com/sponsors/Collazos022"
 global RepoUrl := "https://github.com/Collazos022/DonVox"
 global ConfigFile := A_ScriptDir "\DonVox.ini"
@@ -1289,17 +1289,6 @@ ShowSettingsGui(*) {
         return btn
     }
 
-    ; Cuadros de entrada de atajo con la misma apariencia oscura de las listas (sin flecha de combo)
-    CreateDarkHotkey(pos, configField, labelName) {
-        btn := SettingsGui.Add("Text", pos " Center +0x200 Background262626 cFFFFFF +0x800000", Cfg.%configField%)
-        btn.SetFont("s9 bold", "Segoe UI Variable Text")
-        btn.OnEvent("Click", (*) => (
-            ib := InputBox("Presiona o escribe la combinación de teclas para:`n" labelName "`n(Ejemplos: +!c para Shift+Alt+C, ^!1 para Ctrl+Alt+1)", "Asignar Atajo", "w340 h140", Cfg.%configField%),
-            (ib.Result == "OK" && Trim(ib.Value) != "") ? (Cfg.%configField% := Trim(ib.Value), btn.Text := Cfg.%configField%) : 0
-        ))
-        return btn
-    }
-
     ; =================== 1. SECCIÓN: COMPORTAMIENTO GENERAL (Alineado a x20) ===================
     SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
     SettingsGui.Add("Text", "x20 y16", Lang.SecGeneral)
@@ -1328,35 +1317,35 @@ ShowSettingsGui(*) {
     SettingsGui.Add("Text", "x+15 yp+3 w55 " txtColor, Lang.LblVolume)
     sldVol   := SettingsGui.Add("Slider", "x+5 yp-3 w125 Range0-100 ToolTip", Cfg.Volume)
 
-    ; =================== 3. SECCIÓN: ATAJOS DE TECLADO (Alineado a x20, Cuadros Oscuros) ===================
+    ; =================== 3. SECCIÓN: ATAJOS DE TECLADO (Controles Hotkey Nativos Restaurados) ===================
     SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
     SettingsGui.Add("Text", "x20 y+20", Lang.SecHotkeys)
 
     SettingsGui.SetFont("s9 norm " txtColor, "Segoe UI Variable Text")
 
     SettingsGui.Add("Text", "x20 y+12 w230", Lang.LblHkReadSel)
-    hk1 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkReadSel", Lang.LblHkReadSel)
+    hkSel := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkReadSel)
 
     SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkPause)
-    hk2 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkPause",   Lang.LblHkPause)
+    hkPau := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkPause)
 
     SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkStop)
-    hk3 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkStop",    Lang.LblHkStop)
+    hkStp := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkStop)
 
     SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkRepeat)
-    hk4 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkRepeat",  Lang.LblHkRepeat)
+    hkRep := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkRepeat)
 
     SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkToggle)
-    hk5 := CreateDarkHotkey("x+10 yp-3 w180 h28", "HkToggle",  Lang.LblHkToggle)
+    hkTog := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkToggle)
 
-    ; =================== 4. BARRA DE ACCIÓN INFERIOR (Compacta y Proporcionada) ===================
+    ; =================== 4. BARRA DE ACCIÓN INFERIOR (Con Holgura Adecuada) ===================
     verColor := isDark ? "c60CDFF" : "c0B6288"
-    lblVer := SettingsGui.Add("Text", "x20 y+18 w130 " verColor, Lang.LblVersion)
+    lblVer := SettingsGui.Add("Text", "x20 y+20 w130 " verColor, Lang.LblVersion)
     lblVer.SetFont("underline")
     lblVer.OnEvent("Click", (*) => Run(RepoUrl))
 
     btnDonate := CreateGhButton("x20 y+8 w85 h32", Lang.BtnDonate, (*) => Run(DonateUrl))
-    btnTest   := CreateGhButton("x+8 yp w95 h32", Lang.BtnTest)   ; Ancho optimizado a 95
+    btnTest   := CreateGhButton("x+8 yp w95 h32", Lang.BtnTest)
     btnStop   := CreateGhButton("x+8 yp w75 h32", Lang.BtnStop, (*) => StopReading())
     btnSave   := CreateGhButton("x+12 yp w145 h32", Lang.BtnSave)
 
@@ -1389,6 +1378,11 @@ ShowSettingsGui(*) {
         Cfg.AzureVoiceIndex := ddlAzure.Value,
         Cfg.Rate            := sldRate.Value,
         Cfg.Volume          := sldVol.Value,
+        Cfg.HkReadSel       := hkSel.Value,
+        Cfg.HkPause         := hkPau.Value,
+        Cfg.HkStop          := hkStp.Value,
+        Cfg.HkRepeat        := hkRep.Value,
+        Cfg.HkToggle        := hkTog.Value,
         ApplyStartupRegistry(),
         ApplyVoiceSettings(),
         RegisterAllHotkeys(),
@@ -1399,5 +1393,5 @@ ShowSettingsGui(*) {
     ))
 
     SettingsGui.OnEvent("Close", (*) => (SettingsGui.Destroy(), SettingsGui := ""))
-    SettingsGui.Show("w460 h570")
+    SettingsGui.Show("w460 h650")
 }
