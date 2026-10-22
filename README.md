@@ -3,6 +3,7 @@
 > **Lector Ligero de Portapapeles y Texto Seleccionado para Windows**  
 > *Inspirado en la practicidad de SodelsCot, reinventado en AutoHotkey v2 con conexión nativa a Microsoft Azure Neural TTS y voces locales SAPI5 / OneCore.*
 
+[![Versión](https://img.shields.io/badge/Versión-v1.6.6-0080C0.svg)](DonVox.ahk)
 [![AutoHotkey v2](https://img.shields.io/badge/AutoHotkey-v2.0+-334455.svg?logo=autohotkey&logoColor=white)](https://www.autohotkey.com/)
 [![Plataforma](https://img.shields.io/badge/Plataforma-Windows%2010%20%7C%2011-0078D6.svg?logo=windows&logoColor=white)](https://microsoft.com)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
@@ -22,8 +23,8 @@
 - 📋 **Lectura Inteligente:**
   - **Monitor de Portapapeles:** Lee automáticamente cualquier texto copiado (`Ctrl + C`).
   - **Lectura de Selección Global:** Atajo personalizable (`Shift + Alt + C` por defecto) para capturar y leer cualquier bloque de texto seleccionado en cualquier programa (navegadores, PDFs, editores de código, procesadores de texto, etc.).
-- 🎨 **Diseño Moderno & Windows 11 Fluent:**
-  - Adaptación automática al tema del sistema (Modo Oscuro / Modo Claro en los paneles `GroupBox` y barra de título vía DWM).
+- 🎨 **Diseño Moderno & Windows 11 Fluent (Estilo G-Helper):**
+  - Adaptación automática al tema del sistema (Modo Oscuro `#191919` sin recuadros pesados, botones nativos con bordes redondeados y barra de título oscura vía DWM).
   - **Icono vectorial dinámico en la bandeja (GDI+):** El isotipo (burbuja de diálogo con forma de onda de 7 barras) se dibuja en memoria y cambia de color en tiempo real según el estado:
     - 🔵 **Azul (`#0B6288`):** Activo en Línea (Azure Neural)
     - 🟢 **Verde (`#15803D`):** Activo Local (Windows SAPI5/OneCore)

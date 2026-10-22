@@ -1,20 +1,20 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #SingleInstance Force
 Persistent
 
 ; ==============================================================================
-; DonVox v1.5 - Lector Ligero de Portapapeles y Texto Seleccionado
+; DonVox v1.6.6 - Lector Ligero de Portapapeles y Texto Seleccionado
 ; - Compatible con Voces Nativas de Windows (SAPI5 + OneCore) y Microsoft Azure
 ; - Conexión Nativa a Azure Neural por WinHTTP WebSocket (Protocolo Sec-MS-GEC v2)
-; - Adaptación automática al Tema de Windows 11 (Modo Oscuro / Claro en GroupBox)
+; - Adaptación automática al Tema de Windows 11 (Estilo Oscuro G-Helper)
 ; - Opción de Ejecución al Inicio de Windows (Registro HKCU\...\Run)
 ; - Detección automática del Idioma del Sistema (ES / EN / PT / FR)
 ; - Iconos vectoriales dinámicos integrados en el código (Azul/Verde/Amarillo/Gris)
 ; ==============================================================================
 
 global AppName := "DonVox"
-global AppVersion := "v1.6.4"
-global VersionNum := "1.6.4"
+global AppVersion := "v1.6.6"
+global VersionNum := "1.6.6"
 global DonateUrl := "https://github.com/sponsors/Collazos022"
 global RepoUrl := "https://github.com/Collazos022/DonVox"
 global ConfigFile := A_ScriptDir "\DonVox.ini"
@@ -79,8 +79,11 @@ RegisterAllHotkeys()
 SetupTrayMenu()
 OnClipboardChange(OnClipboardUpdate)
 
-; Mostrar notificación inicial discreta
-TrayTip(Lang.TrayStartupMsg, AppName " " AppVersion, 1)
+; Mostrar notificación inicial discreta (o abrir ajustes si se pasa --show)
+if (A_Args.Length > 0 && A_Args[1] = "--show")
+    ShowSettingsGui()
+else
+    TrayTip(Lang.TrayStartupMsg, AppName " " AppVersion, 1)
 
 ; ==============================================================================
 ; 0A. DETECCIÓN AUTOMÁTICA DEL IDIOMA DEL SISTEMA (ES / EN / PT / FR)
@@ -229,7 +232,7 @@ InitSystemLanguage() {
         Lang.ChkClipboard   := "Leer automáticamente todo lo que se copie al portapapeles (Ctrl + C)"
         Lang.ChkStartup     := "Ejecutar automáticamente al iniciar Windows"
         Lang.SecVoice       := "🎙 Motor de Voz y Ajustes"
-        Lang.ChkAzure       := "Usar Microsoft Azure Neural (Icono Azul - Nativo sin librerías)"
+        Lang.ChkAzure       := "Usar Microsoft Azure Neural (Icono Azul - Online)"
         Lang.LblLocalVoice  := "Voz instalada en Windows (Icono Verde - Local 0 ms):"
         Lang.LblAzureVoice  := "Voz Microsoft Azure (Icono Azul - Online):"
         Lang.LblRate        := "Velocidad:"
@@ -1269,8 +1272,10 @@ ShowSettingsGui(*) {
     txtColor := isDark ? "cCCCCCC" : "c333333" ; Gris suave para subtítulos y etiquetas
     bgColor  := isDark ? "191919" : "F3F3F3"  ; Fondo grafito G-Helper
 
-    SettingsGui := Gui("+OwnDialogs", AppName " " AppVersion " - " Lang.WinTitle)
+    ; -DPIScale y fuente tamaño 8 (s8) para coincidir 1:1 con el diseño de referencia (w512 h681)
+    SettingsGui := Gui("+OwnDialogs -DPIScale", AppName " " AppVersion " - " Lang.WinTitle)
     SettingsGui.BackColor := bgColor
+    pt := 8
 
     ; DWM: Barra de título moderna y esquinas redondeadas
     darkFlag := Buffer(4, 0)
@@ -1280,76 +1285,74 @@ ShowSettingsGui(*) {
     NumPut("Int", 2, cornerFlag, 0)
     DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", SettingsGui.Hwnd, "Int", 33, "Ptr", cornerFlag, "Int", 4)
 
-    ; Botones de acción inferiores con fondo plano de G-Helper (#262626)
-    CreateGhButton(pos, text, onClick := "") {
-        btn := SettingsGui.Add("Text", pos " Center +0x200 Background262626 cFFFFFF", text)
-        btn.SetFont("s9 bold", "Segoe UI Variable Text")
-        if onClick
-            btn.OnEvent("Click", onClick)
-        return btn
-    }
+    ; Configurar fondo oscuro para esquinas redondeadas de botones nativos (WM_CTLCOLORBTN = 0x0135)
+    InitDarkButtonSupport(isDark)
 
-    ; =================== 1. SECCIÓN: COMPORTAMIENTO GENERAL (Alineado a x20) ===================
-    SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "x20 y16", Lang.SecGeneral)
+    ; =================== 1. SECCIÓN: COMPORTAMIENTO GENERAL ===================
+    SettingsGui.SetFont("s" pt " Bold " lblColor, "Segoe UI")
+    hdrGeneral := SettingsGui.Add("Text", "x24 y16 w465 h22 +0x200", Lang.SecGeneral)
+    hdrGeneral.SetFont("s" pt " Bold " lblColor, "Segoe UI")
 
-    SettingsGui.SetFont("s9 norm " lblColor, "Segoe UI Variable Text")
-    chkMaster  := SettingsGui.Add("CheckBox", "x20 y+12 " lblColor " Checked" Cfg.MasterEnabled, Lang.ChkMaster)
-    chkClip    := SettingsGui.Add("CheckBox", "x20 y+8 " lblColor " Checked" Cfg.AutoClipboard, Lang.ChkClipboard)
-    chkStartup := SettingsGui.Add("CheckBox", "x20 y+8 " lblColor " Checked" Cfg.StartWithWin, Lang.ChkStartup)
+    SettingsGui.SetFont("s" pt " norm " lblColor, "Segoe UI")
+    chkMaster  := SettingsGui.Add("CheckBox", "x32 y48 w456 h20 -Wrap " lblColor " Checked" Cfg.MasterEnabled, Lang.ChkMaster)
+    chkClip    := SettingsGui.Add("CheckBox", "x32 y72 w456 h20 -Wrap " lblColor " Checked" Cfg.AutoClipboard, Lang.ChkClipboard)
+    chkStartup := SettingsGui.Add("CheckBox", "x32 y96 w456 h20 -Wrap " lblColor " Checked" Cfg.StartWithWin, Lang.ChkStartup)
 
-    ; =================== 2. SECCIÓN: MOTOR DE VOZ (Alineado a x20) ===================
-    SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "x20 y+20", Lang.SecVoice)
+    ; =================== 2. SECCIÓN: MOTOR DE VOZ Y AJUSTES ===================
+    SettingsGui.SetFont("s" pt " Bold " lblColor, "Segoe UI")
+    hdrVoice := SettingsGui.Add("Text", "x24 y144 w465 h22 +0x200", Lang.SecVoice)
+    hdrVoice.SetFont("s" pt " Bold " lblColor, "Segoe UI")
 
-    SettingsGui.SetFont("s9 norm " lblColor, "Segoe UI Variable Text")
-    chkAzure := SettingsGui.Add("CheckBox", "x20 y+12 " lblColor " Checked" Cfg.UseAzure, Lang.ChkAzure)
+    SettingsGui.SetFont("s" pt " norm " txtColor, "Segoe UI")
+    SettingsGui.Add("Text", "x32 y176 w440 h22 +0x200 " txtColor, Lang.LblLocalVoice)
+    ddlLocal := SettingsGui.Add("DropDownList", "x32 y200 w456 Choose" Cfg.LocalVoiceIndex, VoiceNames)
 
-    SettingsGui.Add("Text", "x20 y+12 " txtColor, Lang.LblLocalVoice)
-    ddlLocal := SettingsGui.Add("DropDownList", "x20 y+4 w420 Choose" Cfg.LocalVoiceIndex, VoiceNames)
+    SettingsGui.SetFont("s" pt " norm " lblColor, "Segoe UI")
+    chkAzure := SettingsGui.Add("CheckBox", "x32 y240 w456 h22 -Wrap " lblColor " Checked" Cfg.UseAzure, Lang.ChkAzure)
+    ddlAzure := SettingsGui.Add("DropDownList", "x32 y264 w456 Choose" Cfg.AzureVoiceIndex, AzureVoices)
 
-    SettingsGui.Add("Text", "x20 y+12 " txtColor, Lang.LblAzureVoice)
-    ddlAzure := SettingsGui.Add("DropDownList", "x20 y+4 w420 Choose" Cfg.AzureVoiceIndex, AzureVoices)
+    SettingsGui.SetFont("s" pt " norm " txtColor, "Segoe UI")
+    SettingsGui.Add("Text", "x32 y304 w71 h20 " txtColor, Lang.LblRate)
+    sldRate  := SettingsGui.Add("Slider", "x104 y304 w156 h41 Range-10-10 ToolTip", Cfg.Rate)
 
-    SettingsGui.Add("Text", "x20 y+14 w65 " txtColor, Lang.LblRate)
-    sldRate  := SettingsGui.Add("Slider", "x+5 yp-3 w125 Range-10-10 ToolTip", Cfg.Rate)
+    SettingsGui.Add("Text", "x272 y304 w69 h20 " txtColor, Lang.LblVolume)
+    sldVol   := SettingsGui.Add("Slider", "x336 y304 w156 h41 Range0-100 ToolTip", Cfg.Volume)
 
-    SettingsGui.Add("Text", "x+15 yp+3 w55 " txtColor, Lang.LblVolume)
-    sldVol   := SettingsGui.Add("Slider", "x+5 yp-3 w125 Range0-100 ToolTip", Cfg.Volume)
+    ; =================== 3. SECCIÓN: ATAJOS DE TECLADO GLOBALES ===================
+    SettingsGui.SetFont("s" pt " Bold " lblColor, "Segoe UI")
+    hdrHotkeys := SettingsGui.Add("Text", "x24 y376 w465 h22", Lang.SecHotkeys)
+    hdrHotkeys.SetFont("s" pt " Bold " lblColor, "Segoe UI")
 
-    ; =================== 3. SECCIÓN: ATAJOS DE TECLADO (Controles Hotkey Nativos Restaurados) ===================
-    SettingsGui.SetFont("s10 bold " lblColor, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "x20 y+20", Lang.SecHotkeys)
+    SettingsGui.SetFont("s" pt " norm " txtColor, "Segoe UI")
 
-    SettingsGui.SetFont("s9 norm " txtColor, "Segoe UI Variable Text")
+    SettingsGui.Add("Text", "x32 y408 w225 h22 +0x200", Lang.LblHkReadSel)
+    hkSel := SettingsGui.Add("Hotkey", "x264 y408 w224 h24", Cfg.HkReadSel)
 
-    SettingsGui.Add("Text", "x20 y+12 w230", Lang.LblHkReadSel)
-    hkSel := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkReadSel)
+    SettingsGui.Add("Text", "x32 y448 w225 h22", Lang.LblHkPause)
+    hkPau := SettingsGui.Add("Hotkey", "x264 y448 w225 h24", Cfg.HkPause)
 
-    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkPause)
-    hkPau := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkPause)
+    SettingsGui.Add("Text", "x32 y488 w225 h22", Lang.LblHkStop)
+    hkStp := SettingsGui.Add("Hotkey", "x264 y488 w225 h24", Cfg.HkStop)
 
-    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkStop)
-    hkStp := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkStop)
+    SettingsGui.Add("Text", "x32 y528 w225 h22", Lang.LblHkRepeat)
+    hkRep := SettingsGui.Add("Hotkey", "x264 y528 w225 h24", Cfg.HkRepeat)
 
-    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkRepeat)
-    hkRep := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkRepeat)
+    SettingsGui.Add("Text", "x32 y568 w225 h22", Lang.LblHkToggle)
+    hkTog := SettingsGui.Add("Hotkey", "x264 y568 w225 h24", Cfg.HkToggle)
 
-    SettingsGui.Add("Text", "x20 y+10 w230", Lang.LblHkToggle)
-    hkTog := SettingsGui.Add("Hotkey", "x+10 yp-3 w180", Cfg.HkToggle)
-
-    ; =================== 4. BARRA DE ACCIÓN INFERIOR (Con Holgura Adecuada) ===================
-    verColor := isDark ? "c60CDFF" : "c0B6288"
-    lblVer := SettingsGui.Add("Text", "x20 y+20 w130 " verColor, Lang.LblVersion)
+    ; =================== 4. VERSIÓN Y BOTONES REALES REDONDEADOS ===================
+    verColor := isDark ? "c60CDFF" : "c0080C0"
+    lblVer := SettingsGui.Add("Text", "x32 y608 w163 h20 " verColor, Lang.LblVersion)
     lblVer.SetFont("underline")
     lblVer.OnEvent("Click", (*) => Run(RepoUrl))
 
-    btnDonate := CreateGhButton("x20 y+8 w85 h32", Lang.BtnDonate, (*) => Run(DonateUrl))
-    btnTest   := CreateGhButton("x+8 yp w95 h32", Lang.BtnTest)
-    btnStop   := CreateGhButton("x+8 yp w75 h32", Lang.BtnStop, (*) => StopReading())
-    btnSave   := CreateGhButton("x+12 yp w145 h32", Lang.BtnSave)
+    SettingsGui.SetFont("s" pt " norm " lblColor, "Segoe UI")
+    btnDonate := SettingsGui.Add("Button", "x24 y640 w75 h23", Lang.BtnDonate)
+    btnTest   := SettingsGui.Add("Button", "x112 y640 w105 h23", Lang.BtnTest)
+    btnStop   := SettingsGui.Add("Button", "x232 y640 w90 h23", Lang.BtnStop)
+    btnSave   := SettingsGui.Add("Button", "x336 y640 w155 h23", Lang.BtnSave)
 
-    ; Aplicar temas oscuros a casillas y listas de selección
+    ; Aplicar temas oscuros a casillas, listas de selección y botones redondeados nativos
     if isDark {
         for chk in [chkMaster, chkClip, chkStartup, chkAzure] {
             try DllCall("uxtheme\SetWindowTheme", "Ptr", chk.Hwnd, "WStr", "DarkMode_Explorer", "Ptr", 0)
@@ -1357,9 +1360,23 @@ ShowSettingsGui(*) {
         for ddl in [ddlLocal, ddlAzure] {
             try DllCall("uxtheme\SetWindowTheme", "Ptr", ddl.Hwnd, "WStr", "DarkMode_CFD", "Ptr", 0)
         }
+        for btn in [btnDonate, btnTest, btnStop, btnSave] {
+            try DllCall("uxtheme\SetWindowTheme", "Ptr", btn.Hwnd, "WStr", "DarkMode_Explorer", "Ptr", 0)
+        }
     }
 
-    btnTest.OnEvent("Click", (*) => (
+    btnDonate.OnEvent("Click", (ctrl, *) => (
+        ClearBtnDefaultFocus(ctrl, SettingsGui),
+        Run(DonateUrl)
+    ))
+
+    btnStop.OnEvent("Click", (ctrl, *) => (
+        ClearBtnDefaultFocus(ctrl, SettingsGui),
+        StopReading()
+    ))
+
+    btnTest.OnEvent("Click", (ctrl, *) => (
+        ClearBtnDefaultFocus(ctrl, SettingsGui),
         Cfg.UseAzure := chkAzure.Value,
         Cfg.LocalVoiceIndex := ddlLocal.Value,
         Cfg.AzureVoiceIndex := ddlAzure.Value,
@@ -1393,5 +1410,32 @@ ShowSettingsGui(*) {
     ))
 
     SettingsGui.OnEvent("Close", (*) => (SettingsGui.Destroy(), SettingsGui := ""))
-    SettingsGui.Show("w460 h650")
+    SettingsGui.Show("w512 h681")
+}
+
+; ==============================================================================
+; 9. SOPORTE DE BOTONES NATIVOS REDONDEADOS EN MODO OSCURO (DarkMode_Explorer)
+; ==============================================================================
+global GhDarkBtnBrush := 0
+
+InitDarkButtonSupport(isDark) {
+    global GhDarkBtnBrush
+    if !GhDarkBtnBrush
+        GhDarkBtnBrush := DllCall("CreateSolidBrush", "UInt", 0x191919, "Ptr")
+    static registered := false
+    if !registered {
+        OnMessage(0x0135, OnWmCtlColorBtn) ; WM_CTLCOLORBTN
+        registered := true
+    }
+}
+
+OnWmCtlColorBtn(wParam, lParam, msg, hwnd) {
+    global GhDarkBtnBrush
+    if IsWin11DarkMode() && GhDarkBtnBrush
+        return GhDarkBtnBrush
+}
+
+ClearBtnDefaultFocus(btnCtrl, guiObj) {
+    try ControlSetStyle("-0x1", btnCtrl.Hwnd) ; Quitar BS_DEFPUSHBUTTON para evitar borde blanco
+    try DllCall("SetFocus", "Ptr", guiObj.Hwnd)
 }
