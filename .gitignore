@@ -1,4 +1,4 @@
-# Archivos temporales generados por la aplicación
+﻿# Archivos temporales generados por la aplicación
 donvox_azure_audio.mp3
 *.tmp
 *.log
@@ -8,5 +8,5 @@ donvox_azure_audio.mp3
 .idea/
 *.bak
 
-# Historial de versiones individuales (el repo mantiene DonVox.ahk canónico)
-DonVox_v*.ahk
+# Carpeta de archivo interno (versiones obsoletas y pruebas de desarrollo)
+archive/
