@@ -1256,7 +1256,7 @@ UpdateTrayMenuState() {
 ; 8. VENTANA GRÁFICA DE CONFIGURACIÓN (ADAPTACIÓN EN GROUPBOX + MULTI-IDIOMA)
 ; ==============================================================================
 ShowSettingsGui(*) {
-    global SettingsGui, Cfg, VoiceNames, AzureVoices, StateIcons, AppName, AppVersion, VersionNum, Lang, DonateUrl, RepoUrl
+    global SettingsGui, Cfg, VoiceNames, AzureVoices, StateIcons, AppName, AppVersion, VersionNum, Lang
     if IsObject(SettingsGui) {
         try {
             SettingsGui.Show()
@@ -1264,159 +1264,85 @@ ShowSettingsGui(*) {
         }
     }
 
-    isDark := IsWin11DarkMode()
-    bgColor := isDark ? "191919" : "F3F3F3"
-    txtPrimary := isDark ? "cFFFFFF" : "c1F1F1F"
-    txtSecondary := isDark ? "c9E9E9E" : "c5E5E5E"
-    accentColor := isDark ? "c60CDFF" : "c0B6288"
+    isDark   := IsWin11DarkMode()
+    gbColor  := isDark ? "c60CDFF" : "c0B6288" ; Azul Fluent claro en oscuro, azul marino en claro
+    txtColor := isDark ? "cCCCCCC" : "c000000" ; Color para etiquetas secundarias
+    lblColor := isDark ? "cFFFFFF" : "c000000" ; Color para checkboxes y títulos
 
     SettingsGui := Gui("+OwnDialogs", AppName " " AppVersion " - " Lang.WinTitle)
-    SettingsGui.BackColor := bgColor
+    if isDark
+        SettingsGui.BackColor := "191919" ; Fondo oficial de Windows 11 Dark Mode
 
-    ; DWM: Barra de título moderna y esquinas redondeadas
-    darkFlag := Buffer(4, 0)
-    NumPut("Int", isDark ? 1 : 0, darkFlag, 0)
-    DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", SettingsGui.Hwnd, "Int", 20, "Ptr", darkFlag, "Int", 4)
-    cornerFlag := Buffer(4, 0)
-    NumPut("Int", 2, cornerFlag, 0)
-    DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", SettingsGui.Hwnd, "Int", 33, "Ptr", cornerFlag, "Int", 4)
+    SettingsGui.SetFont("s9 " lblColor, "Segoe UI")
 
-    ; --------------------------------------------------------------------------
-    ; 1. SELECCIÓN DE MOTOR DE VOZ (Tarjetas de modo tipo G-Helper)
-    ; --------------------------------------------------------------------------
-    SettingsGui.SetFont("s10 bold " txtPrimary, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "xm ym+10", "🎙 " Lang.SecVoice)
+    ; --- Sección 1: Comportamiento General (con Inicio de Windows) ---
+    gb1 := SettingsGui.Add("GroupBox", "xm ym w430 h112 " gbColor, Lang.SecGeneral)
+    chkMaster  := SettingsGui.Add("CheckBox", "xp+15 yp+24 " lblColor " Checked" Cfg.MasterEnabled, Lang.ChkMaster)
+    chkClip    := SettingsGui.Add("CheckBox", "xp yp+26 " lblColor " Checked" Cfg.AutoClipboard, Lang.ChkClipboard)
+    chkStartup := SettingsGui.Add("CheckBox", "xp yp+26 " lblColor " Checked" Cfg.StartWithWin, Lang.ChkStartup)
 
-    btnAzureMode := SettingsGui.Add("Button", "xm y+8 w205 h44", (Cfg.UseAzure ? "● " : "○ ") "Azure Neural`n(Online Hiperrealista)")
-    btnLocalMode := SettingsGui.Add("Button", "x+10 yp w205 h44", (!Cfg.UseAzure ? "● " : "○ ") "Windows SAPI5`n(Local 0 ms)")
+    ; --- Sección 2: Motor y Voces ---
+    gb2 := SettingsGui.Add("GroupBox", "xm y+20 w430 h195 " gbColor, Lang.SecVoice)
+    chkAzure  := SettingsGui.Add("CheckBox", "xp+15 yp+25 " lblColor " Checked" Cfg.UseAzure, Lang.ChkAzure)
 
-    ; --------------------------------------------------------------------------
-    ; 2. AJUSTES DE VOZ Y DESPLEGABLES
-    ; --------------------------------------------------------------------------
-    SettingsGui.SetFont("s10 bold " txtPrimary, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "xm y+16", "⚙ Configuración de Voz")
+    SettingsGui.Add("Text", "xp yp+30 " txtColor, Lang.LblLocalVoice)
+    ddlLocal  := SettingsGui.Add("DropDownList", "xp yp+20 w400 Choose" Cfg.LocalVoiceIndex, VoiceNames)
 
-    SettingsGui.SetFont("s9 " txtSecondary, "Segoe UI Variable Text")
-    lblCurrentVoice := SettingsGui.Add("Text", "xm y+6", Cfg.UseAzure ? Lang.LblAzureVoice : Lang.LblLocalVoice)
+    SettingsGui.Add("Text", "xp yp+30 " txtColor, Lang.LblAzureVoice)
+    ddlAzure  := SettingsGui.Add("DropDownList", "xp yp+20 w400 Choose" Cfg.AzureVoiceIndex, AzureVoices)
 
-    activeList := Cfg.UseAzure ? AzureVoices : VoiceNames
-    activeChoice := Cfg.UseAzure ? Cfg.AzureVoiceIndex : Cfg.LocalVoiceIndex
-    ddlVoice := SettingsGui.Add("DropDownList", "xm y+4 w420 Choose" activeChoice, activeList)
+    SettingsGui.Add("Text", "xp yp+32 w65 " txtColor, Lang.LblRate)
+    sldRate   := SettingsGui.Add("Slider", "x+5 yp-3 w125 Range-10-10 ToolTip", Cfg.Rate)
 
-    ratePct := Cfg.Rate * 8
-    lblRateVal := SettingsGui.Add("Text", "xm y+12 w205", Lang.LblRate " " (ratePct >= 0 ? "+" : "") ratePct "%")
-    sldRate := SettingsGui.Add("Slider", "xm y+4 w205 Range-10-10", Cfg.Rate)
+    SettingsGui.Add("Text", "x+15 yp+3 w55 " txtColor, Lang.LblVolume)
+    sldVol    := SettingsGui.Add("Slider", "x+5 yp-3 w125 Range0-100 ToolTip", Cfg.Volume)
 
-    lblVolVal := SettingsGui.Add("Text", "x+10 yp-20 w205", Lang.LblVolume " " Cfg.Volume "%")
-    sldVol := SettingsGui.Add("Slider", "xp y+4 w205 Range0-100", Cfg.Volume)
+    ; --- Sección 3: Atajos de Teclado ---
+    gb3 := SettingsGui.Add("GroupBox", "xm y+25 w430 h185 " gbColor, Lang.SecHotkeys)
 
-    sldRate.OnEvent("Change", (*) => (
-        rateVal := sldRate.Value * 8,
-        lblRateVal.Text := Lang.LblRate " " (rateVal >= 0 ? "+" : "") rateVal "%"
-    ))
-    sldVol.OnEvent("Change", (*) => (
-        lblVolVal.Text := Lang.LblVolume " " sldVol.Value "%"
-    ))
+    SettingsGui.Add("Text", "xp+15 yp+28 w220 " txtColor, Lang.LblHkReadSel)
+    hkSel := SettingsGui.Add("Hotkey", "x+10 yp-3 w170", Cfg.HkReadSel)
 
-    ; Eventos de conmutación de modo
-    SwitchToAzure(*) {
-        Cfg.UseAzure := 1
-        btnAzureMode.Text := "● Azure Neural`n(Online Hiperrealista)"
-        btnLocalMode.Text := "○ Windows SAPI5`n(Local 0 ms)"
-        lblCurrentVoice.Text := Lang.LblAzureVoice
-        ddlVoice.Delete()
-        ddlVoice.Add(AzureVoices)
-        ddlVoice.Choose(Cfg.AzureVoiceIndex)
-    }
+    SettingsGui.Add("Text", "xm+15 y+12 w220 " txtColor, Lang.LblHkPause)
+    hkPau := SettingsGui.Add("Hotkey", "x+10 yp-3 w170", Cfg.HkPause)
 
-    SwitchToLocal(*) {
-        Cfg.UseAzure := 0
-        btnAzureMode.Text := "○ Azure Neural`n(Online Hiperrealista)"
-        btnLocalMode.Text := "● Windows SAPI5`n(Local 0 ms)"
-        lblCurrentVoice.Text := Lang.LblLocalVoice
-        ddlVoice.Delete()
-        ddlVoice.Add(VoiceNames)
-        ddlVoice.Choose(Cfg.LocalVoiceIndex)
-    }
+    SettingsGui.Add("Text", "xm+15 y+12 w220 " txtColor, Lang.LblHkStop)
+    hkStp := SettingsGui.Add("Hotkey", "x+10 yp-3 w170", Cfg.HkStop)
 
-    btnAzureMode.OnEvent("Click", SwitchToAzure)
-    btnLocalMode.OnEvent("Click", SwitchToLocal)
+    SettingsGui.Add("Text", "xm+15 y+12 w220 " txtColor, Lang.LblHkRepeat)
+    hkRep := SettingsGui.Add("Hotkey", "x+10 yp-3 w170", Cfg.HkRepeat)
 
-    ; --------------------------------------------------------------------------
-    ; 3. COMPORTAMIENTO GENERAL
-    ; --------------------------------------------------------------------------
-    SettingsGui.SetFont("s10 bold " txtPrimary, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "xm y+16", "📋 " Lang.SecGeneral)
+    SettingsGui.Add("Text", "xm+15 y+12 w220 " txtColor, Lang.LblHkToggle)
+    hkTog := SettingsGui.Add("Hotkey", "x+10 yp-3 w170", Cfg.HkToggle)
 
-    SettingsGui.SetFont("s9 " txtPrimary, "Segoe UI Variable Text")
-    chkMaster  := SettingsGui.Add("CheckBox", "xm y+8 Checked" Cfg.MasterEnabled, Lang.ChkMaster)
-    chkClip    := SettingsGui.Add("CheckBox", "xm y+6 Checked" Cfg.AutoClipboard, Lang.ChkClipboard)
-    chkStartup := SettingsGui.Add("CheckBox", "xm y+6 Checked" Cfg.StartWithWin, Lang.ChkStartup)
-
-    ; --------------------------------------------------------------------------
-    ; 4. TECLAS DE ACCESO RÁPIDO (Botones interactivos estilo G-Helper)
-    ; --------------------------------------------------------------------------
-    SettingsGui.SetFont("s10 bold " txtPrimary, "Segoe UI Variable Text")
-    SettingsGui.Add("Text", "xm y+16", "⌨ " Lang.SecHotkeys)
-
-    SettingsGui.SetFont("s9 " txtSecondary, "Segoe UI Variable Text")
-
-    SettingsGui.Add("Text", "xm y+8 w230", Lang.LblHkReadSel)
-    btnHk1 := SettingsGui.Add("Button", "x+10 yp-4 w180 h28 Left", "  " Cfg.HkReadSel)
-
-    SettingsGui.Add("Text", "xm y+10 w230", Lang.LblHkPause)
-    btnHk2 := SettingsGui.Add("Button", "x+10 yp-4 w180 h28 Left", "  " Cfg.HkPause)
-
-    SettingsGui.Add("Text", "xm y+10 w230", Lang.LblHkStop)
-    btnHk3 := SettingsGui.Add("Button", "x+10 yp-4 w180 h28 Left", "  " Cfg.HkStop)
-
-    SettingsGui.Add("Text", "xm y+10 w230", Lang.LblHkRepeat)
-    btnHk4 := SettingsGui.Add("Button", "x+10 yp-4 w180 h28 Left", "  " Cfg.HkRepeat)
-
-    SettingsGui.Add("Text", "xm y+10 w230", Lang.LblHkToggle)
-    btnHk5 := SettingsGui.Add("Button", "x+10 yp-4 w180 h28 Left", "  " Cfg.HkToggle)
-
-    ; Asignar capturador rápido al hacer clic en un atajo
-    ConfigureKey(btnObj, configKeyName, title) {
-        ib := InputBox("Presiona o escribe la combinación de teclas para: " title "`n(Ejemplos: +!c para Shift+Alt+C, ^!1 para Ctrl+Alt+1)", "Configurar Atajo", "w360 h140", Cfg.%configKeyName%)
-        if (ib.Result == "OK" && Trim(ib.Value) != "") {
-            Cfg.%configKeyName% := Trim(ib.Value)
-            btnObj.Text := "  " Cfg.%configKeyName%
-        }
-    }
-
-    btnHk1.OnEvent("Click", (*) => ConfigureKey(btnHk1, "HkReadSel", Lang.LblHkReadSel))
-    btnHk2.OnEvent("Click", (*) => ConfigureKey(btnHk2, "HkPause",   Lang.LblHkPause))
-    btnHk3.OnEvent("Click", (*) => ConfigureKey(btnHk3, "HkStop",    Lang.LblHkStop))
-    btnHk4.OnEvent("Click", (*) => ConfigureKey(btnHk4, "HkRepeat",  Lang.LblHkRepeat))
-    btnHk5.OnEvent("Click", (*) => ConfigureKey(btnHk5, "HkToggle",  Lang.LblHkToggle))
-
-    ; --------------------------------------------------------------------------
-    ; 5. BARRA DE ACCIÓN INFERIOR
-    ; --------------------------------------------------------------------------
-    SettingsGui.SetFont("s9 " accentColor, "Segoe UI Variable Text")
-    lblVer := SettingsGui.Add("Text", "xm y+16 w140", Lang.LblVersion)
+    ; --- Sección Inferior: Versión, Donar y Controles ---
+    verColor := isDark ? "c60CDFF" : "c0B6288"
+    lblVer := SettingsGui.Add("Text", "xm y+14 w130 " verColor, Lang.LblVersion)
     lblVer.SetFont("underline")
     lblVer.OnEvent("Click", (*) => Run(RepoUrl))
 
     btnDonate := SettingsGui.Add("Button", "xm y+6 w90 h32", Lang.BtnDonate)
-    btnTest   := SettingsGui.Add("Button", "x+8 yp w115 h32", "🔊 " Lang.BtnTest)
-    btnStop   := SettingsGui.Add("Button", "x+8 yp w75 h32", "⏹ " Lang.BtnStop)
-    btnSave   := SettingsGui.Add("Button", "x+12 yp w120 h32 Default", "✔ " Lang.BtnSave)
-
+    btnTest   := SettingsGui.Add("Button", "x+8 yp w115 h32", Lang.BtnTest)
+    btnStop   := SettingsGui.Add("Button", "x+8 yp w75 h32", Lang.BtnStop)
+    btnSave   := SettingsGui.Add("Button", "x+14 yp w120 h32 Default", Lang.BtnSave)
     btnDonate.OnEvent("Click", (*) => Run(DonateUrl))
 
-    ; Aplicar temas oscuros de Windows Explorer a todos los botones y combos
+    ; Aplicar tema Windows 11 en bordes, barra y controles
+    ApplyGroupBoxTheme(SettingsGui, [gb1, gb2, gb3])
     if isDark {
-        DllCall("uxtheme\SetWindowTheme", "Ptr", ddlVoice.Hwnd, "WStr", "DarkMode_CFD", "Ptr", 0)
-        allDarkBtns := [btnAzureMode, btnLocalMode, btnHk1, btnHk2, btnHk3, btnHk4, btnHk5, btnDonate, btnTest, btnStop, btnSave]
-        for b in allDarkBtns {
-            try DllCall("uxtheme\SetWindowTheme", "Ptr", b.Hwnd, "WStr", "DarkMode_Explorer", "Ptr", 0)
+        for ddl in [ddlLocal, ddlAzure] {
+            try DllCall("uxtheme\SetWindowTheme", "Ptr", ddl.Hwnd, "WStr", "DarkMode_CFD", "Ptr", 0)
+        }
+        for btn in [btnDonate, btnTest, btnStop, btnSave] {
+            try DllCall("uxtheme\SetWindowTheme", "Ptr", btn.Hwnd, "WStr", "DarkMode_Explorer", "Ptr", 0)
         }
     }
 
+    ; Eventos de botones
     btnTest.OnEvent("Click", (*) => (
-        (Cfg.UseAzure ? (Cfg.AzureVoiceIndex := ddlVoice.Value) : (Cfg.LocalVoiceIndex := ddlVoice.Value)),
+        Cfg.UseAzure := chkAzure.Value,
+        Cfg.LocalVoiceIndex := ddlLocal.Value,
+        Cfg.AzureVoiceIndex := ddlAzure.Value,
         Cfg.Rate := sldRate.Value,
         Cfg.Volume := sldVol.Value,
         ApplyVoiceSettings(),
@@ -1426,12 +1352,19 @@ ShowSettingsGui(*) {
     btnStop.OnEvent("Click", (*) => StopReading())
 
     btnSave.OnEvent("Click", (*) => (
-        Cfg.MasterEnabled := chkMaster.Value,
-        Cfg.AutoClipboard := chkClip.Value,
-        Cfg.StartWithWin  := chkStartup.Value,
-        (Cfg.UseAzure ? (Cfg.AzureVoiceIndex := ddlVoice.Value) : (Cfg.LocalVoiceIndex := ddlVoice.Value)),
-        Cfg.Rate          := sldRate.Value,
-        Cfg.Volume        := sldVol.Value,
+        Cfg.MasterEnabled   := chkMaster.Value,
+        Cfg.AutoClipboard   := chkClip.Value,
+        Cfg.StartWithWin    := chkStartup.Value,
+        Cfg.UseAzure        := chkAzure.Value,
+        Cfg.LocalVoiceIndex := ddlLocal.Value,
+        Cfg.AzureVoiceIndex := ddlAzure.Value,
+        Cfg.Rate            := sldRate.Value,
+        Cfg.Volume          := sldVol.Value,
+        Cfg.HkReadSel       := hkSel.Value,
+        Cfg.HkPause         := hkPau.Value,
+        Cfg.HkStop          := hkStp.Value,
+        Cfg.HkRepeat        := hkRep.Value,
+        Cfg.HkToggle        := hkTog.Value,
         ApplyStartupRegistry(),
         ApplyVoiceSettings(),
         RegisterAllHotkeys(),
@@ -1442,5 +1375,5 @@ ShowSettingsGui(*) {
     ))
 
     SettingsGui.OnEvent("Close", (*) => (SettingsGui.Destroy(), SettingsGui := ""))
-    SettingsGui.Show("w445 h620")
+    SettingsGui.Show()
 }
